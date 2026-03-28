@@ -25,7 +25,7 @@ namespace Not.Core.Persistence
         private readonly IEntityBroker _broker;
 
         public IEntityBroker Broker
-            => Broker;
+            => _broker;
 
         internal Session(IServiceScope scope)
         {
@@ -44,7 +44,7 @@ namespace Not.Core.Persistence
                 .GetMethod(nameof(DatabaseContext.Set), Type.EmptyTypes)!;
 
             var generic = method.MakeGenericMethod(type);
-            return (IQueryable)generic.Invoke(this, null);
+            return (IQueryable)generic.Invoke(_dbc, null);
         }
 
         public IQueryable<BO> Query<BO>()

@@ -30,7 +30,8 @@ namespace Not.Core.Persistence
             if (!type.IsAssignableTo(typeof(BusinessObject)))
                 throw new Exception($"Type must be derived of {typeof(BusinessObject).FullName}");
 
-            var constructor = type.GetConstructor(Array.Empty<Type>());
+            var constructor = type.GetConstructor(Array.Empty<Type>())
+                ?? throw new InvalidOperationException($"Type '{type.FullName}' has no public parameterless constructor.");
             var businessObejct = constructor.Invoke(null);
             _dbc.Add(businessObejct);
             return businessObejct;
@@ -47,9 +48,6 @@ namespace Not.Core.Persistence
         {
             if (bo is null)
                 throw new ArgumentNullException(nameof(bo));
-
-            var efState = _dbc.Entry(bo).State;
-
 
             switch(_dbc.Entry(bo).State)
             {
