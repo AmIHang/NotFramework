@@ -1,6 +1,7 @@
 using Not.Core.Model;
 using Not.Core.Persistence;
 using Not.Core.Tests.Fixtures;
+using Not.Sqlite.Persistence;
 using Xunit;
 
 namespace Not.Core.Tests;
@@ -9,9 +10,9 @@ public class EntityBrokerTests
 {
     // Create<BO>() is a default interface method on IEntityBroker, so the variable
     // must be typed as IEntityBroker (not the concrete EntityBroker class).
-    private static (TestContext ctx, IEntityBroker broker) CreateBroker(string? dbName = null)
+    private static (TestContext ctx, IEntityBroker broker) CreateBroker(SqliteMemoryDatabase? db = null)
     {
-        var ctx = TestContext.CreateInMemory(dbName);
+        var ctx = db is null ? TestContext.CreateInMemory() : TestContext.CreateInMemory(db);
         IEntityBroker broker = new EntityBroker(ctx);
         return (ctx, broker);
     }
@@ -208,8 +209,8 @@ public class EntityBrokerTests
     [Fact]
     public void Commit_PersistsEntities_ToInMemoryStore()
     {
-        var dbName = Guid.NewGuid().ToString();
-        var (ctx, broker) = CreateBroker(dbName);
+        using var db = new SqliteMemoryDatabase();
+        var (ctx, broker) = CreateBroker(db);
 
         var person = broker.Create<Person>();
         person.Name = "Alice";
@@ -218,7 +219,7 @@ public class EntityBrokerTests
         ctx.Dispose();
 
         // Open a second context on the same in-memory database
-        using var ctx2 = TestContext.CreateInMemory(dbName);
+        using var ctx2 = TestContext.CreateInMemory(db);
         var loaded = ctx2.Set<Person>().Single();
         Assert.Equal("Alice", loaded.Name);
         Assert.Equal(30, loaded.Age);
