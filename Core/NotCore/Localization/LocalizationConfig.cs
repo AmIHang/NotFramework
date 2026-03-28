@@ -19,7 +19,7 @@ namespace Not.Core.Localization
         /// Override at application startup to match your supported languages.
         /// </summary>
         public static LocalizationConfig Current { get; set; } = new LocalizationConfig(
-            [CultureSerice.Invariant, CultureSerice.German]
+            [CultureService.Invariant, CultureService.German]
         );
     }
 }
