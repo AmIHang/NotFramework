@@ -23,7 +23,7 @@ namespace Not.Core.Localization
             => Code.GetHashCode();
 
         public override bool Equals(object? obj)
-            => obj is string otherString && Code.Equals(otherString, StringComparison.InvariantCultureIgnoreCase);
+            => obj is Culture otherCulture && Code.Equals(otherCulture.Code, StringComparison.InvariantCultureIgnoreCase);
 
     }
 

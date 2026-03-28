@@ -13,9 +13,9 @@ namespace Not.Core.Persistence
         public IEntityBroker Broker { get; }
 
         public object GetService(Type type);
-        public T GetService<T>()
-            where T : IService
-           => (T)GetService(typeof(T));
+        public T? GetService<T>()
+            where T : class
+           => GetService(typeof(T)) as T;
 
        public IEnumerable<object> GetServices(Type type);
        public IEnumerable<T> GetServices<T>()
