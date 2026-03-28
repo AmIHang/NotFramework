@@ -11,4 +11,9 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.22" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\NotCore\NotCore.csproj" />
+    <ProjectReference Include="..\NotEFCore\NotEFCore.csproj" />
+  </ItemGroup>
+
 </Project>
