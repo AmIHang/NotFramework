@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Not.Core.Persistence;
 using Not.Core.Tests.Fixtures;
+using Not.Sqlite.Persistence;
 using Xunit;
 
 namespace Not.Core.Tests;
@@ -10,12 +11,12 @@ public class SessionTests
 {
     // ── DI / factory helpers ──────────────────────────────────────────────────
 
-    private static IServiceProvider BuildServiceProvider(string? dbName = null, bool addGreetingService = false)
+    private static IServiceProvider BuildServiceProvider(SqliteMemoryDatabase? db = null, bool addGreetingService = false)
     {
+        db ??= new SqliteMemoryDatabase();
         var services = new ServiceCollection();
 
-        services.AddDbContext<TestContext>(opts =>
-            opts.UseInMemoryDatabase(dbName ?? Guid.NewGuid().ToString()));
+        services.AddDbContext<TestContext>(opts => db.Configure(opts));
 
         // Session resolves DatabaseContext from scope; alias TestContext as DatabaseContext
         services.AddScoped<DatabaseContext>(sp => sp.GetRequiredService<TestContext>());
@@ -25,7 +26,13 @@ public class SessionTests
         if (addGreetingService)
             services.AddScoped<IGreetingService, GreetingService>();
 
-        return services.BuildServiceProvider();
+        var sp = services.BuildServiceProvider();
+
+        // Ensure the schema exists before tests start writing data
+        using var scope = sp.CreateScope();
+        scope.ServiceProvider.GetRequiredService<TestContext>().Database.EnsureCreated();
+
+        return sp;
     }
 
     private static ISession CreateSession(IServiceProvider? sp = null)
@@ -70,8 +77,8 @@ public class SessionTests
     [Fact]
     public void QueryGeneric_ReturnsPersistedEntities()
     {
-        var dbName = Guid.NewGuid().ToString();
-        var sp = BuildServiceProvider(dbName);
+        using var db = new SqliteMemoryDatabase();
+        var sp = BuildServiceProvider(db);
 
         // Persist via first session
         using (var s1 = sp.GetRequiredService<ISessionFactory>().Create())
@@ -103,8 +110,8 @@ public class SessionTests
     [Fact]
     public void Commit_PersistsChanges()
     {
-        var dbName = Guid.NewGuid().ToString();
-        var sp = BuildServiceProvider(dbName);
+        using var db = new SqliteMemoryDatabase();
+        var sp = BuildServiceProvider(db);
 
         using (var s1 = sp.GetRequiredService<ISessionFactory>().Create())
         {
@@ -115,7 +122,7 @@ public class SessionTests
         }
 
         // Verify via a raw context on the same database
-        using var ctx = TestContext.CreateInMemory(dbName);
+        using var ctx = TestContext.CreateInMemory(db);
         Assert.Equal("Bob", ctx.Set<Person>().Single().Name);
     }
 
@@ -161,12 +168,15 @@ public class SessionTests
     [Fact]
     public void GetServices_ReturnsAllRegisteredImplementations()
     {
+        using var db = new SqliteMemoryDatabase();
         var services = new ServiceCollection();
-        services.AddDbContext<TestContext>(opts => opts.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+        services.AddDbContext<TestContext>(opts => db.Configure(opts));
         services.AddScoped<DatabaseContext>(sp => sp.GetRequiredService<TestContext>());
         services.AddSingleton<ISessionFactory, SessionFactory>();
         services.AddScoped<IGreetingService, GreetingService>();
         var sp = services.BuildServiceProvider();
+        using var scope = sp.CreateScope();
+        scope.ServiceProvider.GetRequiredService<TestContext>().Database.EnsureCreated();
 
         using var session = sp.GetRequiredService<ISessionFactory>().Create();
         var result = session.GetServices(typeof(IGreetingService)).ToList();

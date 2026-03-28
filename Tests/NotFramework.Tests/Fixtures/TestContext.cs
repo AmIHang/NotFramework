@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Not.Core.EF.Persistence.Model;
 using Not.Core.Model.Metadata;
 using Not.Core.Persistence;
+using Not.Sqlite.Persistence;
 
 namespace Not.Core.Tests.Fixtures;
 
@@ -11,6 +12,9 @@ namespace Not.Core.Tests.Fixtures;
 /// </summary>
 public class TestContext : DatabaseContext
 {
+    // Non-null only when this context created (and therefore owns) the database.
+    private SqliteMemoryDatabase? _ownedDb;
+
     public TestContext(DbContextOptions options) : base(options) { }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -31,12 +35,37 @@ public class TestContext : DatabaseContext
         });
     }
 
-    public static TestContext CreateInMemory(string? dbName = null)
+    public override void Dispose()
     {
-        var options = new DbContextOptionsBuilder<TestContext>()
-            .UseInMemoryDatabase(dbName ?? Guid.NewGuid().ToString())
-            .Options;
-        return new TestContext(options);
+        base.Dispose();
+        _ownedDb?.Dispose();
+        _ownedDb = null;
+    }
+
+    /// <summary>
+    /// Creates a standalone in-memory SQLite context with its own private
+    /// database. The schema is created automatically.
+    /// </summary>
+    public static TestContext CreateInMemory()
+    {
+        var db = new SqliteMemoryDatabase();
+        var options = db.Configure(new DbContextOptionsBuilder<TestContext>()).Options;
+        var ctx = new TestContext(options) { _ownedDb = db };
+        ctx.Database.EnsureCreated();
+        return ctx;
+    }
+
+    /// <summary>
+    /// Creates a context that shares the given <paramref name="db"/> connection,
+    /// allowing data written by one context to be visible in another.
+    /// The schema is created if it does not yet exist.
+    /// </summary>
+    public static TestContext CreateInMemory(SqliteMemoryDatabase db)
+    {
+        var options = db.Configure(new DbContextOptionsBuilder<TestContext>()).Options;
+        var ctx = new TestContext(options);
+        ctx.Database.EnsureCreated();
+        return ctx;
     }
 }
 
@@ -60,11 +89,15 @@ public class TestModelDefinition : ModelDefinition
         yield return Employee.ClassInfo;
     }
 
-    public static TestModelDefinition CreateInMemory(string? dbName = null)
+    /// <summary>
+    /// Creates a standalone in-memory SQLite context for metadata tests.
+    /// Schema is <b>not</b> automatically created; call
+    /// <c>Database.EnsureCreated()</c> explicitly when needed.
+    /// </summary>
+    public static TestModelDefinition CreateInMemory()
     {
-        var options = new DbContextOptionsBuilder<TestModelDefinition>()
-            .UseInMemoryDatabase(dbName ?? Guid.NewGuid().ToString())
-            .Options;
+        var db = new SqliteMemoryDatabase();
+        var options = db.Configure(new DbContextOptionsBuilder<TestModelDefinition>()).Options;
         return new TestModelDefinition(options);
     }
 }

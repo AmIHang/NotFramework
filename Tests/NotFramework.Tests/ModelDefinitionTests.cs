@@ -35,7 +35,7 @@ public class ModelDefinitionTests
         using var host = TestModelDefinition.CreateInMemory();
         using var dep = new SecondTestModelDefinition(
             new DbContextOptionsBuilder<SecondTestModelDefinition>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .UseSqlite("Data Source=:memory:")
                 .Options);
 
         host.Include(dep);
@@ -52,7 +52,7 @@ public class ModelDefinitionTests
         using var host = TestModelDefinition.CreateInMemory();
         using var dep = new SecondTestModelDefinition(
             new DbContextOptionsBuilder<SecondTestModelDefinition>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .UseSqlite("Data Source=:memory:")
                 .Options);
 
         host.Include(dep);
@@ -80,7 +80,7 @@ public class ModelDefinitionTests
     public void OnModelCreating_ThrowsException_WhenClassInfoHasUnknownMappingStrategy()
     {
         var options = new DbContextOptionsBuilder<BadStrategyModelDefinition>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .UseSqlite("Data Source=:memory:")
             .Options;
 
         using var ctx = new BadStrategyModelDefinition(options);
