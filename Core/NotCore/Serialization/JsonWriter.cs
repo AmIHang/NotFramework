@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Not.Core.Serialization
 {
-    internal class JsonWriter : JsonWriter
+    internal class JsonWriter
     {
     }
 }
