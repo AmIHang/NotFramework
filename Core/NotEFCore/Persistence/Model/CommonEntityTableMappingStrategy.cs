@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Not.Core.Localization;
+using Not.Core.Model.Localization;
 using Not.Core.Model.Metadata.Property;
 using Not.Core.Model.Metadata;
 using System;
@@ -27,11 +29,33 @@ namespace Not.Core.EF.Persistence.Model
                 .Select(x => x.GetValue(classInfo) as PropertyInfo)
                 .Where(x => x != null);
 
-            foreach(var prop in properties)
+            foreach (var prop in properties)
             {
-                var pBuilder = builder.Property(prop.PropertyType, prop.PropertyName)
-                    .HasColumnName(prop.ColumnName)
-                    .IsRequired(prop.IsRequired);
+                if (prop.PropertyType == typeof(LocalizedString))
+                {
+                    // Map the CLR property to the invariant column so EF Core can resolve the type.
+                    builder.Property(prop.PropertyType, prop.PropertyName)
+                           .HasColumnName(prop.ColumnName)
+                           .HasConversion(new LocalizedStringInvariantConverter())
+                           .IsRequired(false);
+
+                    // Register one shadow property per non-invariant configured culture.
+                    foreach (var culture in LocalizationConfig.Current.SupportedCultures
+                        .Where(c => c.Code != ""))
+                    {
+                        var shadowKey = LocalizedStringSync.GetShadowPropName(prop.PropertyName, culture.Code);
+                        var colName   = LocalizedStringSync.GetColumnName(prop.ColumnName, culture.Code);
+                        builder.Property<string>(shadowKey)
+                               .HasColumnName(colName)
+                               .IsRequired(false);
+                    }
+                }
+                else
+                {
+                    builder.Property(prop.PropertyType, prop.PropertyName)
+                           .HasColumnName(prop.ColumnName)
+                           .IsRequired(prop.IsRequired);
+                }
             }
         }
     }

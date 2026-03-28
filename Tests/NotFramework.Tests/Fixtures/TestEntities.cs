@@ -1,4 +1,5 @@
 using Not.Core.Model;
+using Not.Core.Model.Localization;
 using Not.Core.Model.Metadata;
 using Not.Core.Model.Metadata.Property;
 using Not.Core.Service;
@@ -13,10 +14,12 @@ public class Person : BusinessObject
 {
     public string Name { get; set; } = "";
     public int Age { get; set; }
+    public LocalizedString Title { get; set; } = new();
 
     public static readonly PersonClassInfo ClassInfo = new();
     public static readonly StringPropertyInfo<Person> NameInfo = new("Name");
     public static readonly IntPropertyInfo<Person> AgeInfo = new("Age") { IsRequired = true };
+    public static readonly LocalizedStringPropertyInfo<Person> TitleInfo = new("Title");
 }
 
 public class PersonClassInfo : ClassInfo<Person>
