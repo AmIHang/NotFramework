@@ -22,6 +22,7 @@ public class TestContext : DatabaseContext
             e.HasKey(x => x.OID);
             e.Property(x => x.Name);
             e.Property(x => x.Age);
+            e.Ignore(x => x.Title);
         });
 
         modelBuilder.Entity<Employee>(e =>

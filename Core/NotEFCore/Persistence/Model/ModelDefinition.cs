@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Not.Core.Model.Localization;
 using Not.Core.Model.Metadata;
 using Not.Core.Persistence;
 using System;
