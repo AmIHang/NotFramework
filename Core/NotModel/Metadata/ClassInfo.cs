@@ -69,7 +69,7 @@ namespace Not.Core.Model.Metadata
             {
                 if(_baseClassInfo == null)
                 {
-                    _baseClassInfo = BaseType.GetField("ClassInfo", System.Reflection.BindingFlags.Static).GetValue(null) as ClassInfo;
+                    _baseClassInfo = BaseType.GetField("ClassInfo", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).GetValue(null) as ClassInfo;
                 }
                 return _baseClassInfo;
             }
