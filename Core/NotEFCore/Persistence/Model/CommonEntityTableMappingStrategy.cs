@@ -52,9 +52,12 @@ namespace Not.Core.EF.Persistence.Model
                 }
                 else
                 {
-                    builder.Property(prop.PropertyType, prop.PropertyName)
-                           .HasColumnName(prop.ColumnName)
-                           .IsRequired(prop.IsRequired);
+                    var pBuilder = builder.Property(prop.PropertyType, prop.PropertyName)
+                        .HasColumnName(prop.ColumnName)
+                        .IsRequired(prop.IsRequired);
+
+                    if (prop is IDecimalProperty decimalProp)
+                        pBuilder.HasPrecision(decimalProp.Precision, decimalProp.Scale);
                 }
             }
         }
