@@ -27,7 +27,7 @@ namespace Not.Core.Localization
 
     }
 
-    public static class CultureSerice
+    public static class CultureService
     {
         public readonly static Culture Invariant = new("Invariant", "");
         public readonly static Culture German = new("Deutsch", "de");
