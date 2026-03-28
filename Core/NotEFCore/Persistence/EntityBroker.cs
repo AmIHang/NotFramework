@@ -32,9 +32,9 @@ namespace Not.Core.Persistence
 
             var constructor = type.GetConstructor(Array.Empty<Type>())
                 ?? throw new InvalidOperationException($"Type '{type.FullName}' has no public parameterless constructor.");
-            var businessObejct = constructor.Invoke(null);
-            _dbc.Add(businessObejct);
-            return businessObejct;
+            var businessObject = constructor.Invoke(null);
+            _dbc.Add(businessObject);
+            return businessObject;
         }
 
         public void Delete(BusinessObject bo)
