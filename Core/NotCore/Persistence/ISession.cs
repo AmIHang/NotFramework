@@ -20,7 +20,7 @@ namespace Not.Core.Persistence
        public IEnumerable<object> GetServices(Type type);
        public IEnumerable<T> GetServices<T>()
             where T: class, IService
-            => (IEnumerable<T>)GetServices(typeof(Type));
+            => (IEnumerable<T>)GetServices(typeof(T));
 
         public object GetRequiredService(Type type);
         public T GetRequiredService<T>()
