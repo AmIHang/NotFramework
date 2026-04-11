@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Not.Core.Model.Metadata.Property;
 
 namespace Not.Core.Model.Metadata
 {
@@ -85,6 +86,26 @@ namespace Not.Core.Model.Metadata
                 return _isDerivation.Value;
             }
         }
+
+        private IReadOnlyList<Property.PropertyInfo>? _properties;
+        public IReadOnlyList<Property.PropertyInfo> Properties
+        {
+            get
+            {
+                if (_properties == null)
+                {
+                    _properties = Type.GetFields()
+                        .Where(x => x.DeclaringType == Type)
+                        .Select(x => x.GetValue(null) as Property.PropertyInfo)
+                        .Where(x => x != null)
+                        .ToList()!;
+                }
+                return _properties;
+            }
+        }
+
+        public Property.PropertyInfo? GetProperty(string name)
+            => Properties.FirstOrDefault(p => p.PropertyName == name);
 
         protected ClassInfo(Type type)
         {

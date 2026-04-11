@@ -71,6 +71,46 @@ public class TestContext : DatabaseContext
 }
 
 /// <summary>
+/// ModelDefinition for relationship property tests.
+/// Includes Person, Order, OrderItem, Vehicle and Car.
+/// </summary>
+public class RelationshipModelDefinition : ModelDefinition
+{
+    private static readonly Guid _guid = Guid.Parse("D4E5F6A7-B8C9-0123-DEFA-456789ABCDEF");
+
+    public override Guid Guid => _guid;
+    public override string Name => "RelationshipModel";
+    public override string Version => "1.0.0";
+
+    public RelationshipModelDefinition(DbContextOptions options) : base(options) { }
+
+    protected override IEnumerable<ClassInfo> GetClassInfos()
+    {
+        yield return Person.ClassInfo;
+        yield return Order.ClassInfo;
+        yield return OrderItem.ClassInfo;
+        yield return Vehicle.ClassInfo;
+        yield return Car.ClassInfo;
+        yield return Supplier.ClassInfo;
+        yield return SupplierContact.ClassInfo;
+    }
+
+    public static RelationshipModelDefinition CreateInMemory()
+    {
+        var db = new SqliteMemoryDatabase();
+        var options = db.Configure(new DbContextOptionsBuilder<RelationshipModelDefinition>()).Options;
+        return new RelationshipModelDefinition(options);
+    }
+
+    public static (RelationshipModelDefinition ctx, SqliteMemoryDatabase db) CreateInMemoryWithDb()
+    {
+        var db = new SqliteMemoryDatabase();
+        var options = db.Configure(new DbContextOptionsBuilder<RelationshipModelDefinition>()).Options;
+        return (new RelationshipModelDefinition(options), db);
+    }
+}
+
+/// <summary>
 /// ModelDefinition implementation for ModelDefinition tests.
 /// Uses TPH strategy for both Person and Employee.
 /// </summary>
