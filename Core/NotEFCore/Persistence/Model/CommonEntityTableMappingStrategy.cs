@@ -31,7 +31,57 @@ namespace Not.Core.EF.Persistence.Model
 
             foreach (var prop in properties)
             {
-                if (prop.PropertyType == typeof(LocalizedString))
+                if (prop is PrincipalPropertyInfo)
+                {
+                    // The dependent side (ReferencePropertyInfo on the target entity) owns
+                    // the EF configuration for 1:1 relationships. Skip here.
+                }
+                else if (prop is NavigationPropertyInfo navProp)
+                {
+                    // If the target entity declares a matching ReferencePropertyInfo for the
+                    // inverse navigation, that side owns the relationship configuration
+                    // (FK side is authoritative). Skip here to avoid duplicate EF setup.
+                    bool inverseOwnsConfig = navProp.InverseNavigation != null
+                        && navProp.TargetClass?.Properties
+                            .OfType<ReferencePropertyInfo>()
+                            .Any(r => r.PropertyName == navProp.InverseNavigation) == true;
+
+                    if (!inverseOwnsConfig)
+                    {
+                        builder.HasMany(navProp.TargetType, navProp.PropertyName)
+                            .WithOne(navProp.InverseNavigation)
+                            .HasForeignKey(navProp.ForeignKeyProperty);
+                    }
+                }
+                else if (prop is ReferencePropertyInfo refProp)
+                {
+                    // Detect 1:1: the inverse navigation on the target is a PrincipalPropertyInfo,
+                    // not a NavigationPropertyInfo (no collection on the other side).
+                    bool isOneToOne = refProp.InverseNavigation != null
+                        && refProp.TargetClass?.Properties
+                            .OfType<PrincipalPropertyInfo>()
+                            .Any(p => p.PropertyName == refProp.InverseNavigation) == true;
+
+                    if (isOneToOne)
+                    {
+                        // Dependent side (this entity) owns FK column.
+                        // HasForeignKey(classInfo.Type) tells EF which side has the FK;
+                        // the shadow property name is determined by EF convention.
+                        builder.HasOne(refProp.TargetType, refProp.PropertyName)
+                            .WithOne(refProp.InverseNavigation)
+                            .HasForeignKey(classInfo.Type)
+                            .IsRequired(refProp.IsRequired);
+                    }
+                    else
+                    {
+                        // 1:n — FK side fully configures the relationship.
+                        // WithMany(InverseNavigation) registers the collection on the target too.
+                        builder.HasOne(refProp.TargetType, refProp.PropertyName)
+                            .WithMany(refProp.InverseNavigation)
+                            .IsRequired(refProp.IsRequired);
+                    }
+                }
+                else if (prop.PropertyType == typeof(LocalizedString))
                 {
                     // Map the CLR property to the invariant column so EF Core can resolve the type.
                     builder.Property(prop.PropertyType, prop.PropertyName)
