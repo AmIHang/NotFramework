@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\Core\NotModel\NotModel.csproj" />
     <ProjectReference Include="..\..\Core\NotEFCore\NotEFCore.csproj" />
     <ProjectReference Include="..\..\Core\NotSqlite\NotSqlite.csproj" />
+    <ProjectReference Include="..\..\Core\NotYaml\NotYaml.csproj" />
   </ItemGroup>
 
 </Project>
